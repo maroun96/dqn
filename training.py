@@ -15,7 +15,7 @@ with warnings.catch_warnings():
 
 import torch.optim as optim
 
-DEFAULT_ENV_NAME = "ALE/Pong-v5"
+DEFAULT_ENV_NAME = "PongNoFrameskip-v4"
 MEAN_REWARD_BOUND = 19.0
 
 GAMMA = 0.99
@@ -27,7 +27,7 @@ SYNC_TARGET_FRAMES = 1000
 
 EPSILON_DECAY_LAST_FRAME = 150000
 EPSILON_START = 1.0
-EPSILON_FINAL = 0.01
+EPSILON_FINAL = 0.02
 
 Experience = collections.namedtuple(
     'Experience', field_names=['state', 'action', 'reward', 'done', 'new_state']
