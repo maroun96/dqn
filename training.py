@@ -3,6 +3,7 @@ import collections
 import csv
 import time
 import warnings
+import gym
 
 import numpy as np
 import torch
@@ -10,16 +11,18 @@ import torch.nn as nn
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=UserWarning)
-    import dqn_model
     import wrappers
 
-import torch.optim as optim
+import cartpole_model
 
-DEFAULT_ENV_NAME = "PongNoFrameskip-v4"
-MEAN_REWARD_BOUND = 19.0
+import torch.optim as optim
+import torch.optim.lr_scheduler as lr_scheduler
+
+DEFAULT_ENV_NAME = "CartPole-v1"
+MEAN_REWARD_BOUND = 400
 
 GAMMA = 0.99
-BATCH_SIZE = 32
+BATCH_SIZE = 200
 REPLAY_SIZE = 10000
 REPLAY_START_SIZE = 10000
 LEARNING_RATE = 1e-4
@@ -27,7 +30,7 @@ SYNC_TARGET_FRAMES = 1000
 
 EPSILON_DECAY_LAST_FRAME = 150000
 EPSILON_START = 1.0
-EPSILON_FINAL = 0.02
+EPSILON_FINAL = 0.2
 
 Experience = collections.namedtuple(
     'Experience', field_names=['state', 'action', 'reward', 'done', 'new_state']
@@ -113,15 +116,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
     device = torch.device("cuda" if args.cuda else "cpu")
 
-    env = wrappers.make_env(args.env)
-    net = dqn_model.DQN(env.observation_space.shape, env.action_space.n).to(device)
-    tgt_net = dqn_model.DQN(env.observation_space.shape, env.action_space.n).to(device)
+    #env = wrappers.make_env(args.env)
+    env = gym.make(DEFAULT_ENV_NAME)
+    net = cartpole_model.CartPoleModel(env.observation_space.shape, env.action_space.n).to(device)
+    tgt_net = cartpole_model.CartPoleModel(env.observation_space.shape, env.action_space.n).to(device)
     
     buffer = ExperienceBuffer(REPLAY_SIZE)
     agent = Agent(env, buffer)
     epsilon = EPSILON_START
 
-    optimizer = optim.Adam(net.parameters(), lr = LEARNING_RATE)
+    optimizer = optim.Adam(net.parameters(), lr = LEARNING_RATE, weight_decay=1e-5)
     total_reward = []
     frame_idx = 0
     ts_frame = 0
@@ -167,6 +171,8 @@ if __name__ == "__main__":
         loss_t = calc_loss(batch, net, tgt_net, device=device)
         loss_t.backward()
         optimizer.step()
+
+    
     
     #creating csv file
     header = ['frame index', 'epsilon', 'speed', 'mean reward', 'game reward']

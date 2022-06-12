@@ -10,6 +10,7 @@ class CartPoleModel(nn.Module):
             nn.ReLU(),
             nn.Linear(32, n_actions)
         )
+        
     
     def forward(self, x):
         return self.fc(x)
